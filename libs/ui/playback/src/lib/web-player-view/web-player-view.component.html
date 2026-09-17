@@ -1,0 +1,115 @@
+@for (application of renderedApplications(); track application.token) {
+    @if (application.binding; as binding) {
+        @if (binding.target === 'videojs') {
+            @defer (on immediate) {
+                @if (vjsOptions) {
+                    <app-vjs-player
+                        [options]="vjsOptions"
+                        [mediaTitle]="resolvedMediaTitle()"
+                        [volume]="volume()"
+                        [showCaptions]="showCaptions()"
+                        [interactionEnabled]="playbackInteractionEnabled()"
+                        [startTime]="effectiveStartTime()"
+                        [seriesNavigation]="seriesNavigation()"
+                        (timeUpdate)="handleTimeUpdate($event, application)"
+                        (playbackIssue)="handlePlaybackIssue($event, binding)"
+                        (playbackEnded)="playbackEnded.emit()"
+                        (previousEpisodeRequested)="
+                            previousEpisodeRequested.emit()
+                        "
+                        (nextEpisodeRequested)="nextEpisodeRequested.emit()"
+                    />
+                }
+            } @placeholder {
+                <div
+                    class="web-player-defer-placeholder"
+                    aria-hidden="true"
+                ></div>
+            }
+        } @else if (binding.target === 'html5') {
+            @defer (on immediate) {
+                @if (channel) {
+                    <app-html-video-player
+                        [channel]="$any(channel)"
+                        [mediaTitle]="resolvedMediaTitle()"
+                        [volume]="volume()"
+                        [showCaptions]="showCaptions()"
+                        [isLive]="resolvedIsLive()"
+                        [interactionEnabled]="playbackInteractionEnabled()"
+                        [startTime]="effectiveStartTime()"
+                        [seriesNavigation]="seriesNavigation()"
+                        (timeUpdate)="handleTimeUpdate($event, application)"
+                        (playbackIssue)="handlePlaybackIssue($event, binding)"
+                        (playbackEnded)="playbackEnded.emit()"
+                        (previousEpisodeRequested)="
+                            previousEpisodeRequested.emit()
+                        "
+                        (nextEpisodeRequested)="nextEpisodeRequested.emit()"
+                    />
+                }
+            } @placeholder {
+                <div
+                    class="web-player-defer-placeholder"
+                    aria-hidden="true"
+                ></div>
+            }
+        } @else if (binding.target === 'artplayer') {
+            @defer (on immediate) {
+                @if (channel) {
+                    <app-art-player
+                        [channel]="$any(channel)"
+                        [mediaTitle]="resolvedMediaTitle()"
+                        [volume]="volume()"
+                        [showCaptions]="showCaptions()"
+                        [isLive]="resolvedIsLive()"
+                        [interactionEnabled]="playbackInteractionEnabled()"
+                        [startTime]="effectiveStartTime()"
+                        [seriesNavigation]="seriesNavigation()"
+                        (timeUpdate)="handleTimeUpdate($event, application)"
+                        (playbackIssue)="handlePlaybackIssue($event, binding)"
+                        (playbackEnded)="playbackEnded.emit()"
+                        (previousEpisodeRequested)="
+                            previousEpisodeRequested.emit()
+                        "
+                        (nextEpisodeRequested)="nextEpisodeRequested.emit()"
+                    />
+                }
+            } @placeholder {
+                <div
+                    class="web-player-defer-placeholder"
+                    aria-hidden="true"
+                ></div>
+            }
+        }
+    } @else if (application.embeddedMpv) {
+        <app-embedded-mpv-player
+            [playback]="resolvedPlayback()"
+            [mediaTitle]="resolvedMediaTitle()"
+            [recordingFolder]="recordingFolder()"
+            [recordingMetadata]="recordingMetadata()"
+            [seriesNavigation]="seriesNavigation()"
+            (timeUpdate)="handleTimeUpdate($event, application)"
+            (playbackEnded)="playbackEnded.emit()"
+            (previousEpisodeRequested)="previousEpisodeRequested.emit()"
+            (nextEpisodeRequested)="nextEpisodeRequested.emit()"
+            (recordingStopped)="recordingStopped.emit($event)"
+        />
+    }
+}
+
+@if (visiblePlaybackDiagnostic(); as issue) {
+    <app-playback-diagnostic-panel
+        [diagnostic]="issue"
+        [recommendations]="recommendations()"
+        [playback]="resolvedPlayback()"
+        [supportsManagedExternalPlayers]="supportsManagedExternalPlayers"
+        [playbackExternallyTransferable]="playbackExternallyTransferable()"
+        [alternativeSources]="alternativeSources()"
+        [externalStates]="externalRecoveryState()"
+        [pending]="recoveryPending()"
+        (retryRequested)="retryPlayback()"
+        (playerRequested)="requestRecommendedPlayer($event)"
+        (alternativeSourceRequested)="alternativeSourceRequested.emit($event)"
+        (sourceCheckRequested)="sourceCheckRequested.emit($event)"
+    />
+}

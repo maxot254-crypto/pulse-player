@@ -1,0 +1,13 @@
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  better-sqlite3: false
+  electron-winstaller: false
+  esbuild: true
+  less: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true
+  unrs-resolver: true
+
+pmOnFail: ignore

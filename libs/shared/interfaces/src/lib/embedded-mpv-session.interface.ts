@@ -1,0 +1,132 @@
+import type { PlayerSubtitleStyle } from './subtitle-style.util';
+import type { RecordingStartMetadata } from './recording-metadata.interface';
+
+export type EmbeddedMpvSessionStatus =
+    | 'idle'
+    | 'loading'
+    | 'playing'
+    | 'paused'
+    | 'ended'
+    | 'error'
+    | 'closed';
+
+export interface EmbeddedMpvBounds {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface EmbeddedMpvCapabilities {
+    subtitles: boolean;
+    playbackSpeed: boolean;
+    aspectOverride: boolean;
+    screenshot: boolean;
+    recording: boolean;
+    /** Loading an external subtitle file via `sub-add` (frame-copy engine). */
+    externalSubtitles?: boolean;
+    /** Adjusting `sub-delay` at runtime (frame-copy engine). */
+    subtitleDelay?: boolean;
+    /** Adjusting `sub-scale`/`sub-color` at runtime (frame-copy engine). */
+    subtitleStyle?: boolean;
+}
+
+/**
+ * Subtitle presentation preferences forwarded to mpv: `sizePercent` maps to
+ * `sub-scale` (100 = 1.0); `color` maps to `sub-color`, null restores mpv's
+ * default. Alias of the canonical shared shape so the renderer controls and
+ * the IPC contract cannot drift structurally.
+ */
+export type EmbeddedMpvSubtitleStyle = PlayerSubtitleStyle;
+
+export type EmbeddedMpvEngine = 'native' | 'frame-copy';
+
+export interface EmbeddedMpvSupport {
+    supported: boolean;
+    platform: string;
+    reason?: string;
+    capabilities?: EmbeddedMpvCapabilities;
+    /**
+     * Rendering engine the main process will use for new sessions.
+     * `native` = platform video surface (NSOpenGLView/HWND/X11 wid),
+     * `frame-copy` = helper process + shm ring + renderer canvas.
+     */
+    engine?: EmbeddedMpvEngine;
+    /**
+     * True when this machine could run the frame-copy engine (macOS arm64
+     * or Linux x64, after its helper/runtime capability gate), regardless of
+     * whether it is active.
+     * Drives the Settings toggle; switching engines requires an app restart.
+     */
+    frameCopyAvailable?: boolean;
+    /**
+     * Stable fail-closed capability reason when frameCopyAvailable is false.
+     * Intended for startup tracing and support diagnostics, not user copy.
+     */
+    frameCopyUnavailableReason?: string;
+}
+
+/**
+ * Where the renderer's frame pump finds the current shm frame ring of a
+ * frame-copy session. A new generation is announced after every viewport
+ * resize; the pump re-attaches to the new segment.
+ */
+export interface EmbeddedMpvFrameSource {
+    shmName: string;
+    width: number;
+    height: number;
+    generation: number;
+    readerPath: string;
+}
+
+export interface EmbeddedMpvAudioTrack {
+    id: number;
+    title?: string;
+    language?: string;
+    selected: boolean;
+    defaultTrack?: boolean;
+    forced?: boolean;
+}
+
+export type EmbeddedMpvSubtitleTrack = EmbeddedMpvAudioTrack;
+
+export interface EmbeddedMpvRecordingState {
+    active: boolean;
+    targetPath?: string;
+    startedAt?: string;
+    error?: string;
+}
+
+export interface EmbeddedMpvRecordingStartOptions {
+    directory?: string;
+    title?: string;
+    /**
+     * Channel/EPG snapshot captured by the live host at recording start; the
+     * main-process recording tracker persists it. See
+     * recording-metadata.interface.ts for why capture must happen up front.
+     */
+    metadata?: RecordingStartMetadata;
+}
+
+export interface EmbeddedMpvSession {
+    id: string;
+    title: string;
+    streamUrl: string;
+    status: EmbeddedMpvSessionStatus;
+    positionSeconds: number;
+    durationSeconds: number | null;
+    volume: number;
+    audioTracks: EmbeddedMpvAudioTrack[];
+    selectedAudioTrackId: number | null;
+    subtitleTracks: EmbeddedMpvSubtitleTrack[];
+    selectedSubtitleTrackId: number | null;
+    playbackSpeed: number;
+    aspectOverride: string;
+    /** Source video size (mpv dwidth/dheight); frame-copy engine only. */
+    videoWidth?: number;
+    videoHeight?: number;
+    recording?: EmbeddedMpvRecordingState;
+    startedAt: string;
+    updatedAt: string;
+    error?: string;
+}
